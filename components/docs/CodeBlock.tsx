@@ -69,6 +69,22 @@ export default function CodeBlock({ code, language }: CodeBlockProps) {
         .replace(/\b(npm|pnpm|yarn|install|add|git|clone|cd|node|run|dev|build|start)\b/g, '<span class="text-violet-400 font-medium">$1</span>')
     }
 
+    if (lang === 'python' || lang === 'py') {
+      return escaped
+        // Comments
+        .replace(/(#.*)/g, '<span class="text-zinc-500 font-normal">$1</span>')
+        // Strings
+        .replace(/('(.*?)'|"(.*?)"|`(.*?)`)/g, '<span class="text-emerald-400">$1</span>')
+        // Keywords
+        .replace(/\b(import|from|def|class|return|async|await|try|except|raise|if|else|elif|pass|as|with|print|is|not|in)\b/g, '<span class="text-violet-400 font-medium">$1</span>')
+        // Types & classes
+        .replace(/\b(SettleSettle|AsyncSettleSettle|InsufficientCreditsError|AuthenticationError|ValidationError|RateLimitError|TimeoutError|ApiError|SettleSettleError|dict|list|str|int|float|bool|None)\b/g, '<span class="text-teal-400">$1</span>')
+        // Method calls
+        .replace(/\.([a-zA-Z0-9_]+)(?=\()/g, '.<span class="text-blue-400">$1</span>')
+        // Booleans & Numbers
+        .replace(/\b(True|False|None|\d+)\b/g, '<span class="text-amber-400">$1</span>')
+    }
+
     return escaped
   }
 
