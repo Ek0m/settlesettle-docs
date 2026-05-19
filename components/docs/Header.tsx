@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { navigationData } from '@/lib/navigation'
+import Image from 'next/image'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -19,9 +20,7 @@ export default function Header() {
       {/* Brand Logo & Name */}
       <div className="flex items-center gap-3">
         <Link href="/docs" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-          <div className="w-6.5 h-6.5 rounded bg-gradient-to-tr from-emerald-500 to-emerald-400 flex items-center justify-center font-bold text-[#070B14] text-sm tracking-tighter">
-            SS
-          </div>
+          <Image src="/logo-white.png" alt="SettleSettle" width={24} height={24} />
           <span className="font-display font-bold text-white text-base tracking-tight">
             SettleSettle <span className="text-zinc-500 font-normal text-xs ml-0.5 font-mono">Dev Hub</span>
           </span>
