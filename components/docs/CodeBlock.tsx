@@ -27,65 +27,132 @@ export default function CodeBlock({ code, language }: CodeBlockProps) {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
 
+    const tokens: string[] = []
+
+    const getAlphabeticalIndex = (num: number): string => {
+      let str = ''
+      while (num >= 0) {
+        str = String.fromCharCode(65 + (num % 26)) + str
+        num = Math.floor(num / 26) - 1
+      }
+      return str
+    }
+
+    const getIndexFromAlphabetical = (str: string): number => {
+      let num = 0
+      for (let i = 0; i < str.length; i++) {
+        num = num * 26 + (str.charCodeAt(i) - 64)
+      }
+      return num - 1
+    }
+
+    const addToken = (html: string): string => {
+      const idx = tokens.length
+      tokens.push(html)
+      return `__SS_HIGHLIGHT_TOKEN_${getAlphabeticalIndex(idx)}__`
+    }
+
+    let result = escaped
+
     if (lang === 'typescript' || lang === 'javascript' || lang === 'ts' || lang === 'js') {
-      return escaped
-        // Comments
-        .replace(/(\/\/.*)/g, '<span class="text-zinc-500 font-normal">$1</span>')
-        // Strings
-        .replace(/('(.*?)'|"(.*?)"|`(.*?)`)/g, '<span class="text-emerald-400">$1</span>')
-        // Keywords
-        .replace(/\b(import|export|default|const|let|var|function|return|async|await|try|catch|if|else|throw|new|instanceof|class|from|typeof|as)\b/g, '<span class="text-violet-400 font-medium">$1</span>')
-        // Types & classes
-        .replace(/\b(SettleSettle|InsufficientCreditsError|AuthenticationError|ValidationError|RateLimitError|TimeoutError|ApiError|SettleSettleError|Promise|string|number|boolean|any|void|unknown|never|Error)\b/g, '<span class="text-teal-400">$1</span>')
-        // Method calls
-        .replace(/\.([a-zA-Z0-9_]+)(?=\()/g, '.<span class="text-blue-400">$1</span>')
-        // Booleans & Numbers
-        .replace(/\b(true|false|null|undefined|\d+)\b/g, '<span class="text-amber-400">$1</span>')
+      // Comments
+      result = result.replace(/(\/\/.*)/g, (_, p1) =>
+        addToken(`<span class="text-zinc-500 font-normal">${p1}</span>`)
+      )
+      // Strings
+      result = result.replace(/('(.*?)'|"(.*?)"|`(.*?)`)/g, (_, p1) =>
+        addToken(`<span class="text-emerald-400">${p1}</span>`)
+      )
+      // Keywords
+      result = result.replace(/\b(import|export|default|const|let|var|function|return|async|await|try|catch|if|else|throw|new|instanceof|class|from|typeof|as)\b/g, (_, p1) =>
+        addToken(`<span class="text-violet-400 font-medium">${p1}</span>`)
+      )
+      // Types & classes
+      result = result.replace(/\b(SettleSettle|InsufficientCreditsError|AuthenticationError|ValidationError|RateLimitError|TimeoutError|ApiError|SettleSettleError|Promise|string|number|boolean|any|void|unknown|never|Error)\b/g, (_, p1) =>
+        addToken(`<span class="text-teal-400">${p1}</span>`)
+      )
+      // Method calls
+      result = result.replace(/\.([a-zA-Z0-9_]+)(?=\()/g, (_, p1) =>
+        '.' + addToken(`<span class="text-blue-400">${p1}</span>`)
+      )
+      // Booleans & Numbers
+      result = result.replace(/\b(true|false|null|undefined|\d+)\b/g, (_, p1) =>
+        addToken(`<span class="text-amber-400">${p1}</span>`)
+      )
     }
 
     if (lang === 'json') {
-      return escaped
-        // String properties (keys)
-        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")(\s*:)/g, '<span class="text-violet-400">$1</span>$3')
-        // String values
-        .replace(/:(\s*"([^\\"]|\\")*")/g, ': <span class="text-emerald-400">$1</span>')
-        // Booleans, Numbers, null
-        .replace(/\b(true|false|null|\d+)\b/g, '<span class="text-amber-400">$1</span>')
+      // String properties (keys)
+      result = result.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")(\s*:)/g, (_, p1, p2, p3) =>
+        addToken(`<span class="text-violet-400">${p1}</span>`) + p3
+      )
+      // String values
+      result = result.replace(/:(\s*"([^\\"]|\\")*")/g, (_, p1) =>
+        ': ' + addToken(`<span class="text-emerald-400">${p1.trim()}</span>`)
+      )
+      // Booleans, Numbers, null
+      result = result.replace(/\b(true|false|null|\d+)\b/g, (_, p1) =>
+        addToken(`<span class="text-amber-400">${p1}</span>`)
+      )
     }
 
     if (lang === 'http') {
-      return escaped
-        // Headers
-        .replace(/^([a-zA-Z0-9-]+):/gm, '<span class="text-violet-400">$1</span>:')
-        // HTTP Methods
-        .replace(/\b(GET|POST|PUT|DELETE|PATCH|OPTIONS|http|https)\b/g, '<span class="text-teal-400 font-semibold">$1</span>')
+      // Headers
+      result = result.replace(/^([a-zA-Z0-9-]+):/gm, (_, p1) =>
+        addToken(`<span class="text-violet-400">${p1}</span>`) + ':'
+      )
+      // HTTP Methods
+      result = result.replace(/\b(GET|POST|PUT|DELETE|PATCH|OPTIONS|http|https)\b/g, (_, p1) =>
+        addToken(`<span class="text-teal-400 font-semibold">${p1}</span>`)
+      )
     }
 
     if (lang === 'bash' || lang === 'sh') {
-      return escaped
-        // Comments
-        .replace(/(#.*)/g, '<span class="text-zinc-500 font-normal">$1</span>')
-        // Commands
-        .replace(/\b(npm|pnpm|yarn|install|add|git|clone|cd|node|run|dev|build|start)\b/g, '<span class="text-violet-400 font-medium">$1</span>')
+      // Comments
+      result = result.replace(/(#.*)/g, (_, p1) =>
+        addToken(`<span class="text-zinc-500 font-normal">${p1}</span>`)
+      )
+      // Commands
+      result = result.replace(/\b(npm|pnpm|yarn|install|add|git|clone|cd|node|run|dev|build|start)\b/g, (_, p1) =>
+        addToken(`<span class="text-violet-400 font-medium">${p1}</span>`)
+      )
     }
 
     if (lang === 'python' || lang === 'py') {
-      return escaped
-        // Comments
-        .replace(/(#.*)/g, '<span class="text-zinc-500 font-normal">$1</span>')
-        // Strings
-        .replace(/('(.*?)'|"(.*?)"|`(.*?)`)/g, '<span class="text-emerald-400">$1</span>')
-        // Keywords
-        .replace(/\b(import|from|def|class|return|async|await|try|except|raise|if|else|elif|pass|as|with|print|is|not|in)\b/g, '<span class="text-violet-400 font-medium">$1</span>')
-        // Types & classes
-        .replace(/\b(SettleSettle|AsyncSettleSettle|InsufficientCreditsError|AuthenticationError|ValidationError|RateLimitError|TimeoutError|ApiError|SettleSettleError|dict|list|str|int|float|bool|None)\b/g, '<span class="text-teal-400">$1</span>')
-        // Method calls
-        .replace(/\.([a-zA-Z0-9_]+)(?=\()/g, '.<span class="text-blue-400">$1</span>')
-        // Booleans & Numbers
-        .replace(/\b(True|False|None|\d+)\b/g, '<span class="text-amber-400">$1</span>')
+      // Comments
+      result = result.replace(/(#.*)/g, (_, p1) =>
+        addToken(`<span class="text-zinc-500 font-normal">${p1}</span>`)
+      )
+      // Strings
+      result = result.replace(/('(.*?)'|"(.*?)"|`(.*?)`)/g, (_, p1) =>
+        addToken(`<span class="text-emerald-400">${p1}</span>`)
+      )
+      // Keywords
+      result = result.replace(/\b(import|from|def|class|return|async|await|try|except|raise|if|else|elif|pass|as|with|print|is|not|in)\b/g, (_, p1) =>
+        addToken(`<span class="text-violet-400 font-medium">${p1}</span>`)
+      )
+      // Types & classes
+      result = result.replace(/\b(SettleSettle|AsyncSettleSettle|InsufficientCreditsError|AuthenticationError|ValidationError|RateLimitError|TimeoutError|ApiError|SettleSettleError|dict|list|str|int|float|bool|None)\b/g, (_, p1) =>
+        addToken(`<span class="text-teal-400">${p1}</span>`)
+      )
+      // Method calls
+      result = result.replace(/\.([a-zA-Z0-9_]+)(?=\()/g, (_, p1) =>
+        '.' + addToken(`<span class="text-blue-400">${p1}</span>`)
+      )
+      // Booleans & Numbers
+      result = result.replace(/\b(True|False|None|\d+)\b/g, (_, p1) =>
+        addToken(`<span class="text-amber-400">${p1}</span>`)
+      )
     }
 
-    return escaped
+    // Restore all tokens in one pass
+    let restored = result
+    restored = restored.replace(/__SS_HIGHLIGHT_TOKEN_([A-Z]+)__/g, (_, p1) => {
+      const idx = getIndexFromAlphabetical(p1)
+      return tokens[idx]
+    })
+
+    return restored
   }
 
   return (
